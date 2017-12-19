@@ -1,0 +1,1597 @@
+<!DOCTYPE html5>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width,user-scalable=no">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+		<title>Monster Freenzy</title>
+		<link href='icon.png' rel='shortcut icon'>
+		<style>
+			body {background-color:white;overflow:hidden;padding:0;margin:0;}
+		</style>
+		<script src="enchant/build/enchant.js"></script>
+		<script src="scripts/storage.js"></script>
+		<script src="scripts/witch.js"></script>
+		<script src="scripts/plain.js"></script>
+		<script src="scripts/restrictive_plain.js"></script>
+		<script src="scripts/fallen_plain.js"></script>
+		<script src="scripts/cannon_plain.js"></script>
+	</head>
+	<body>
+	<script>
+    
+		/*
+			scores rank:
+			02 - each party taken
+			05 - watermelon special
+			10 - pumpking special
+			20 - each move left (when victorious)
+		*/
+    
+    	credits = function(){
+			console.log("============================================================================");
+			console.log("===                                                                      ===");
+			console.log("=== Em Desenvolvimento por Leonardo Lanzellotti | Monster Freenzy - 2015 ===");
+			console.log("===                                                                      ===");
+			console.log("============================================================================");
+      	};
+
+      	//========== VARIABLES ============
+			var game;
+		var GAME_STATUS = 0;
+		var levelActual = 1;//default is 1
+		var levelMaxUnlocked = levelActual;
+		var plain;
+		var goalsPosX = [[110],[55,155],[0,110,210]];
+		var score_init = 350;
+		var score = score_init;
+		var __score__ = score;
+		var monsterLevelIndex = 0;
+		var __monsterLevel__ = [[0,25],[25,50],[50,75],[75,100],[100,125]];
+		var check_wait = false;
+		var __COST_RANDOM__ = 20;
+		var __COST_NO_ICE__ = 500;
+		var __COST_COLLECT_SAME__ = 450;
+		var __COST_REMOVE_ONE__ = 100;
+		var waitRemoveOne = false;
+		var waitCollectSame = false;
+		var __ENABLE_SAVE__ = true;
+		var debugMasterCounter = 0;
+		var debugMasterTarget = 10;
+      
+      	credits();
+      	enchant();
+      
+      	window.onload = function () {
+
+			game = new Core(80*6,80*9);
+
+			game.preload(
+				"bgA.jpg",
+				"bgB.jpg",
+				"bgC.jpg",
+				"bgD.jpg",
+				"bgE.jpg",
+				"bgF.jpg",
+				"bgG.jpg",
+				"bgH.jpg",
+				"semgrade80x80.png",
+				"monsterLevels58x55.png",
+				"WatermelonSpecial107x80.png",
+				"MessageBombWatermelon200x23.png",
+				"MessageFlashPumpkin200x26.png",
+				"PumpkinSpecial26x26.png",
+				"ice1.3.png",
+				"ice1.4.png",
+				"restart.png",
+				"back.png",
+				"music.png",
+				"arrayLeft.png",
+				"arrayRight.png",
+				"witch.png",
+				"specialTile.png",
+				"MessageWinner350x88.png",
+				"MessageLoser350x88.png",
+				"noice.png",
+				"collectall.png",
+				"target.png",
+				"cannon.png",
+				"shot.png"
+			);
+
+			game.preload(
+				"themeIntro.ogg",
+				"themeLevel.ogg",
+				"menu.wav",
+				"lockedLevel.wav",
+				"select.wav",
+				"selectCancel.wav",
+				"selectedRelease.wav",
+				"upMonster.ogg",
+				"ice.wav",
+				"absorb.wav",
+				"winner.ogg",
+				"themeLevel2.ogg",
+				"loser.ogg"
+			);
+
+			game.fps = 30;
+    
+			game.onload = function () {
+
+				if(__ENABLE_SAVE__){
+					storage.init();
+				}
+
+	  winner = function(){
+	  
+	    if(themeLevel._state != 0)
+	      themeLevel.stop();
+	    
+	    GAME_STATUS = 2;
+	    
+	    game.assets['winner.ogg'].play();
+	    
+	    var mask = new Label();
+	    mask.width = game.width;
+	    mask.height = game.height;
+	    mask.x = 0;
+	    mask.y = 0;
+	    mask.backgroundColor = 'black';
+	    mask.opacity = 0;
+	    
+	    game.rootScene.addChild(mask);
+	    mask.tl.fadeIn(120).delay(40).then(function(){game.rootScene.removeChild(this);});	  
+	  
+	    var s = new Sprite(350,88);
+	    s.x = (game.width-s.width)/2;
+	    s.y = (game.height-s.height)/2;
+	  
+	    s.image = game.assets["MessageWinner350x88.png"];
+	    s.frame = 0;
+	    
+	    var yi = s.y;
+	    
+	    game.rootScene.addChild(s);
+	    s.tl.scaleTo(1.25,1.25,57).scaleTo(1.1,1.1,50).scaleTo(1.2,1.2,25).moveBy(-10,0,8).moveTo(game.width,yi,4).delay(10).then(function(){check_wait=true;game.assets['winner.ogg'].stop();game.rootScene.removeChild(this);});
+	    
+	  };
+	  
+	  loser = function(){
+	  
+	    if(themeLevel._state != 0)
+	      themeLevel.stop();
+	    
+	    GAME_STATUS = 2;
+	    
+	    game.assets['loser.ogg'].play();
+	    
+	    var mask = new Label();
+	    mask.width = game.width;
+	    mask.height = game.height;
+	    mask.x = 0;
+	    mask.y = 0;
+	    mask.backgroundColor = 'black';
+	    mask.opacity = 0;
+	    
+	    game.rootScene.addChild(mask);
+	    //mask.tl.fadeIn(80).delay(20).then(function(){game.rootScene.removeChild(this);});
+	    mask.tl.fadeIn(85).delay(20).then(function(){game.rootScene.removeChild(this);});	  
+	  
+	    var s = new Sprite(350,88);
+	    s.x = (game.width-s.width)/2;
+	    s.y = (game.height-s.height)/2;
+	  
+	    s.image = game.assets["MessageLoser350x88.png"];
+	    s.frame = 0;
+	    
+	    var yi = s.y;
+	    
+	    game.rootScene.addChild(s);
+	    s.tl.scaleTo(1.25,1.25,30).scaleTo(1.1,1.1,30).scaleTo(1.2,1.2,18).moveBy(-10,0,8).moveTo(game.width,yi,4).delay(10).then(function(){check_wait=true;game.assets['loser.ogg'].stop();game.rootScene.removeChild(this);});
+	  };
+	  
+	  var removeOnePos = {x1:0,y1:0,x2:0,y2:0};
+	  removeOne = function(p){
+	    
+	    var spr = new Sprite(80,80);
+	    spr.image = game.assets["target.png"];
+	    spr.x = p.x;
+	    spr.y = p.y;
+	    spr.scale(p.scale,p.scale);
+	    game.rootScene.addChild(spr);
+	    removeOnePos = {x1:spr.x,y1:spr.y,x2:spr.x+80,y2:spr.y+80};
+	    
+	  };
+	  
+	  var collectSamePos = {x1:0,y1:0,x2:0,y2:0};
+	  collectSame = function(p){
+	    
+	    var spr = new Sprite(59,80);
+	    spr.image = game.assets["collectall.png"];
+	    spr.x = p.x;
+	    spr.y = p.y;
+	    spr.scale(p.scale,p.scale);
+	    game.rootScene.addChild(spr);
+	    collectSamePos = {x1:spr.x,y1:spr.y,x2:spr.x+59,y2:spr.y+80};
+	    
+	  };
+	  
+	  var noIcePos = {x1:0,y1:0,x2:0,y2:0};
+	  noIce = function(p){
+	    
+	    var spr = new Sprite(80,80);
+	    spr.image = game.assets["noice.png"];
+	    spr.x = p.x;
+	    spr.y = p.y;
+	    spr.scale(p.scale,p.scale);
+	    game.rootScene.addChild(spr);
+	    noIcePos = {x1:spr.x,y1:spr.y,x2:spr.x+80,y2:spr.y+80};
+	    
+	  };
+	  
+	  var restartPos = {x1:0,y1:0,x2:0,y2:0};
+	  restart = function(p){
+	    
+	    var spr = new Sprite(80,80);
+	    spr.image = game.assets["restart.png"];
+	    spr.x = p.x;
+	    spr.y = p.y;
+	    spr.scale(p.scale,p.scale);
+	    spr.tl.scaleTo(1,1,30).scaleTo(0.95,0.95,20).scaleTo(p.scale,p.scale,20).delay(120).loop();
+	    game.rootScene.addChild(spr);
+	    restartPos = {x1:spr.x,y1:spr.y,x2:spr.x+80,y2:spr.y+80};
+	    
+	  };
+	  
+	  var backPos = {x1:0,y1:0,x2:0,y2:0};
+	  back = function(p){
+	    
+	    var spr = new Sprite(80,80);
+	    spr.image = game.assets["back.png"];
+	    spr.x = p.x;
+	    spr.y = p.y;
+	    spr.scale(p.scale,p.scale);
+	    spr.tl.scaleTo(1,1,30).scaleTo(0.95,0.95,20).scaleTo(p.scale,p.scale,20).delay(180).loop();
+	    game.rootScene.addChild(spr);
+	    backPos = {x1:spr.x,y1:spr.y,x2:spr.x+80,y2:spr.y+80};
+	    
+	  };
+	  
+	  var arrayObject = {left:undefined,right:undefined};
+	  
+	  var arrayLeftPos = {x1:0,y1:0,x2:0,y2:0};
+	  arrayLeft = function(p){
+	    
+	    var spr = new Sprite(80,44);
+	    spr.image = game.assets["arrayLeft.png"];
+	    spr.x = p.x;
+	    spr.y = p.y;
+	    spr.scale(p.scale,p.scale);
+	    spr.tl.delay(120).scaleTo(1.1,1.1,4).scaleTo(0.95,0.95,4).scaleTo(p.scale,p.scale,4).loop();
+	    game.rootScene.addChild(spr);
+	    arrayObject.left = spr;
+	    arrayLeftPos = {x1:spr.x,y1:spr.y,x2:spr.x+80,y2:spr.y+44};
+	  };
+	  
+	  var arrayRightPos = {x1:0,y1:0,x2:0,y2:0};
+	  arrayRight = function(p){
+	    
+	    var spr = new Sprite(80,44);
+	    spr.image = game.assets["arrayRight.png"];
+	    spr.x = p.x;
+	    spr.y = p.y;
+	    spr.scale(p.scale,p.scale);
+	    spr.tl.delay(80).scaleTo(1.1,1.1,4).scaleTo(0.95,0.95,4).scaleTo(p.scale,p.scale,4).loop();
+	    game.rootScene.addChild(spr);
+	    arrayObject.right = spr;
+	    arrayRightPos = {x1:spr.x,y1:spr.y,x2:spr.x+80,y2:spr.y+44};
+	    
+	  };
+	  
+	  var themeIntro = game.assets["themeIntro.ogg"];
+	  var themeLevelA = game.assets["themeLevel.ogg"];
+	  var themeLevelB = game.assets["themeLevel2.ogg"];
+	  var themeLevel = themeLevelA;
+	  var checkMusicCounter = 0;
+	  
+	  var musicPos = {x1:0,y1:0,x2:0,y2:0,state:false,obj:undefined};
+	  music = function(p){
+	    
+	    var spr = new Sprite(80,80);
+	    spr.image = game.assets["music.png"];
+	    spr.x = p.x;
+	    spr.y = p.y;
+	    spr.scale(p.scale,p.scale);
+	    if(musicPos.state){
+	      spr.frame = 0;
+	    }else{
+	      spr.frame = 1;
+	    }
+	    spr.tl.delay(100).scaleTo(1.1,1.1,4).scaleTo(0.95,0.95,4).scaleTo(p.scale,p.scale,4).loop();
+	    game.rootScene.addChild(spr);
+	    musicPos = {x1:spr.x,y1:spr.y,x2:spr.x+80,y2:spr.y+80,state:musicPos.state,obj:spr};
+	    checkMusic();
+	  };
+	  
+		checkMusic = function(){
+
+			if(musicPos.state == true){
+
+				if(GAME_STATUS == 0){
+					if(themeIntro._state == 0 || themeIntro.currentTime == themeIntro.duration){themeIntro.play();}
+					if(themeLevel._state != 0){themeLevel.stop();}
+				}else if(GAME_STATUS == 1){
+					if(themeLevel._state == 0 || themeLevel.currentTime == themeLevel.duration){themeLevel.play();}
+					if(themeIntro._state != 0){themeIntro.stop();}
+				}
+				checkMusicCounter=500;
+
+			}else{
+
+				if(themeIntro._state != 0){themeIntro.stop();}
+				if(themeLevel._state != 0){themeLevel.stop();}
+				checkMusicCounter=0;
+
+			}
+
+		};
+	  
+		toggleMusic = function(){
+
+			musicPos.state = !musicPos.state;
+
+			if(musicPos.state == true){
+				musicPos.obj.frame = 0;
+
+				if(GAME_STATUS == 0){
+					if(themeIntro._state == 0 || themeIntro.currentTime == themeIntro.duration){
+						themeIntro.play();
+						if(themeLevel._state != 0){themeLevel.stop();}
+					}	      
+				}else if(GAME_STATUS == 1){
+					if(themeLevel._state == 0 || themeLevel.currentTime == themeLevel.duration){
+						themeLevel.play();
+						if(themeIntro._state != 0){themeIntro.stop();}
+					}	      
+				}
+
+				checkMusicCounter=500;
+
+			}else{
+				musicPos.obj.frame = 1;
+
+				if(GAME_STATUS == 0){
+					if(themeIntro._state != 0){themeIntro.stop();}
+					if(themeLevel._state != 0){themeLevel.stop();}
+				}else if(GAME_STATUS == 1){
+					if(themeLevel._state != 0){themeLevel.stop();}
+					if(themeIntro._state != 0){themeIntro.stop();}
+				}
+
+				checkMusicCounter = 0;
+
+			}
+
+		};
+	  
+	  reset = function(){
+	  
+	    var len = game.rootScene.childNodes.length;
+	    for(var i=0;i<len;i++){
+	      game.rootScene.removeChild(game.rootScene.childNodes[0]);
+	    }
+	    game.rootScene.childNodes = [];	  
+	    
+	  };	
+	  
+	  scoreLabel = function(){
+	  
+	      var bg = new Label(score.toString());
+	      bg.width = 250;
+	      bg.height = 50;
+	      bg.x = game.width-bg.width-20;
+	      bg.y = 20;
+	      bg.color = "white";
+	      bg.backgroundColor = "rgba(0,0,0,0.7)";
+	      bg.font = "45px sans-serif";
+	      bg.textAlign = "center";
+	      game.rootScene.addChild(bg);
+	  
+	  };
+	  
+	  neigh = function(arr,p){
+	  
+	    for(var i in arr){
+	      
+	      var ax = arr[i][0];
+	      var ay = arr[i][1];
+	      
+	      var dx = Math.abs(ax - p[0]);
+	      var dy = Math.abs(ay - p[1]);
+	      
+	      if(dx <= 1 && dy <= 1){
+		return true;
+	      }
+	      
+	    }
+	    
+	    return false;
+	  
+	  };
+	  
+	  inArray = function(arr,p){
+	    for(var i in arr){
+	      if(arr[i][0]==p[0]&&arr[i][1]==p[1]){
+		return true;
+	      }
+	    }
+	    return false;
+	  };
+	  
+	  indexOf = function(arr,p){
+	    for(var i in arr){
+	      if(arr[i][0]==p[0]&&arr[i][1]==p[1]){
+		return i;
+	      }
+	    }
+	    return -1;
+	  };
+	  
+	  count = function(arr,p){
+	    var c=0;
+	    for(var i in arr)
+	      if(arr[i].toString() == p.toString())
+		c++;
+	    return c;
+	  };
+	  
+		plotBG = function(src){
+			var dimen = game.assets[src];
+			var bg = new Sprite(dimen.width,dimen.height);
+			bg.image = game.assets[src];
+			bg.scaleX = 1 + (game.width / dimen.width);
+			bg.scaleY = 1 + (game.height / dimen.height);
+			game.rootScene.addChild(bg);
+		};
+	  
+	  level = function(){
+	  
+	    reset();
+	    __score__ = 0;
+	    
+	    if(levelActual < 51){
+	      themeLevel = themeLevelA;
+	    }else{
+	      themeLevel = themeLevelB;
+	    }
+	    
+	    switch(levelActual){
+	    
+	      case 1:
+		plotBG("bgC.jpg");
+		plain = new Plain(4,3,[0,1,2],[10,10,0],[]);
+		plain.moves = 7;
+	      break;
+	      case 2:
+		plotBG("bgC.jpg");
+		plain = new Plain(4,4,[0,1,2],[10,20,10],[]);
+		plain.moves = 8;
+	      break;
+	      case 3:
+		plotBG("bgC.jpg");
+		plain = new Plain(4,4,[1,2,3],[0,20,10],[]);
+		plain.moves = 7;
+	      break;
+	      case 4:
+		plotBG("bgC.jpg");
+		plain = new Plain(5,4,[0,1,2,3],[0,10,10,0],[]);
+		plain.moves = 8;
+	      break;
+	      case 5:
+		plotBG("bgC.jpg");
+		plain = new Plain(5,4,[0,2,3],[10,30,0],[]);
+		plain.moves = 9;
+	      break;
+	      case 6:
+		plotBG("bgC.jpg");
+		plain = new Plain(5,3,[0,1,1,2],[10,0,0,20],[]);
+		plain.moves = 9;
+	      break;
+	      case 7:
+		plotBG("bgC.jpg");
+		plain = new Plain(4,5,[0,1,2,3],[30,30,10,0],[]);
+		plain.moves = 17;
+	      break;
+	      case 8:
+		plotBG("bgC.jpg");
+		plain = new Plain(5,4,[0,1,2,3],[0,32,32,32],[]);
+		plain.moves = 17;
+	      break;
+	      case 9:
+		plotBG("bgC.jpg");
+		plain = new Plain(4,4,[0,1,2,3],[28,0,28,0],[]);
+		plain.moves = 18;
+	      break;
+	      case 10:
+		plotBG("bgC.jpg");
+		plain = new Plain(5,4,[0,1,2,3,12],[0,0,0,0,100],[]);
+		plain.moves = 13;
+	      break;
+	      case 11:
+		plotBG("bgC.jpg");
+		plain = new Plain(5,5,[0,2,3,4],[0,30,0,30],[]);
+		plain.moves = 15;
+	      break;
+	      case 12:
+		plotBG("bgC.jpg");
+		plain = new Plain(3,5,[1,3,3,3,4],[0,28,0,0,16],[]);
+		plain.moves = 10;
+	      break;
+	      case 13:
+		plotBG("bgC.jpg");
+		plain = new Plain(5,5,[1,2,3,4],[25,25,0,25],[]);
+		plain.moves = 12;
+	      break;
+	      case 14:
+		plotBG("bgC.jpg");
+		plain = new Plain(6,4,[0,1,3,4],[20,30,30,0],[]);
+		plain.moves = 15;
+	      break;
+	      case 15:
+		plotBG("bgB.jpg");
+		plain = new Plain(5,4,[0,1,2,4],[20,20,20,0],[]);
+		plain.moves = 14;
+	      break;
+	      case 16:
+		plotBG("bgB.jpg");
+		plain = new Plain(4,6,[0,2,3,3],[30,0,0,0],[]);
+		plain.moves = 12;
+	      break;
+	      case 17:
+		plotBG("bgB.jpg");
+		plain = new Plain(5,5,[1,2,3,5],[24,20,20,0],[]);
+		plain.moves = 12;
+	      break;
+	      case 18:
+		plotBG("bgB.jpg");
+		plain = new Plain(6,4,[0,2,4,5],[0,0,25,20],[]);
+		plain.moves = 14;
+	      break;
+	      case 19:
+		plotBG("bgB.jpg");
+		plain = new Plain(6,5,[2,3,4,5,5,5],[21,0,10,0,0,0],[]);
+		plain.moves = 12;
+	      break;
+	      case 20:
+		plotBG("bgB.jpg");
+		plain = new Plain(5,5,[0,1,4,5,12],[0,0,0,0,150],[]);
+		plain.moves = 16;
+	      break;
+	      case 21:
+		plotBG("bgB.jpg");
+		plain = new Plain(5,4,[0,2,4,6],[0,24,24,0],[]);
+		plain.moves = 13;
+	      break;
+	      case 22:
+		plotBG("bgB.jpg");
+		plain = new Plain(4,5,[1,3,5,6],[25,0,25,27],[]);
+		plain.moves = 13;
+	      break;
+	      case 23:
+		plotBG("bgB.jpg");
+		plain = new Plain(5,5,[0,3,4,6],[26,0,26,0],[]);
+		plain.moves = 14;
+	      break;
+	      case 24:
+		plotBG("bgB.jpg");
+		plain = new Plain(4,4,[1,4,4,6],[18,0,0,18],[]);
+		plain.moves = 11;
+	      break;
+	      case 25:
+		plotBG("bgB.jpg");
+		plain = new Plain(4,6,[1,2,3,5],[0,0,32,35],[]);
+		plain.moves = 19;
+	      break;
+	      case 26:
+		plotBG("bgB.jpg");
+		plain = new Plain(4,4,[0,2,4,6],[20,20,0,0],[[2,1],[2,2],[3,1],[3,2]]);
+		plain.moves = 19;
+	      break;
+	      case 27:
+		plotBG("bgB.jpg");
+		plain = new Plain(5,4,[1,3,5,7],[25,0,25,35],[[1,1],[1,2],[3,1],[3,2]]);
+		plain.moves = 18;
+	      break;
+	      case 28:
+		plotBG("bgB.jpg");
+		plain = new Plain(6,3,[3,4,6,7],[0,0,33,0],[[1,1],[2,1],[3,1],[4,1]]);
+		plain.moves = 23;
+	      break;
+	      case 29:
+		plotBG("bgB.jpg");
+		plain = new Plain(6,3,[0,2,5,7],[20,0,0,20],[[5,0],[5,2],[4,1],[4,0],[4,2]]);
+		plain.moves = 22;
+	      break;
+	      case 30:
+		plotBG("bgB.jpg");
+		plain = new Plain(5,5,[1,2,4,6,12],[0,0,0,0,175],[[1,1],[1,2],[1,3],[2,1],[2,3],[3,2]]);
+		plain.moves = 21;
+	      break;
+	      case 31:
+		plotBG("bgD.jpg");
+		plain = new Plain(3,6,[0,3,3,5,7],[18,0,0,18,14],[[1,0],[1,2],[1,3],[1,5],[0,0],[0,5]]);
+		plain.moves = 18;
+	      break;
+	      case 32:
+		plotBG("bgD.jpg");
+		plain = new Plain(5,6,[2,4,5,7],[19,19,0,0],[[1,0],[2,0],[3,0],[4,0],[1,2],[2,2],[3,2],[4,2],[1,4],[2,4],[3,4],[4,4]]);
+		plain.moves = 16;
+	      break;
+	      case 33:
+		plotBG("bgD.jpg");
+		plain = new Plain(5,4,[0,3,6,7],[21,0,25,21],[[1,0],[2,1],[2,2],[1,3],[3,0],[4,1],[4,2],[3,3]]);
+		plain.moves = 18;
+	      break;
+	      case 34:
+		plotBG("bgD.jpg");
+		plain = new Plain(5,5,[0,2,5,6],[0,30,28,0],[[0,0],[1,1],[2,2],[1,3],[0,4]]);
+		plain.moves = 19;
+	      break;
+	      case 35:
+		plotBG("bgD.jpg");
+		plain = new Plain(4,5,[3,4,6,7],[30,0,21,21],[[0,0],[1,0],[2,0],[3,0],[3,1],[3,2],[3,3],[3,4],[2,4],[1,4],[0,4]]);
+		plain.moves = 19;
+	      break;
+	      case 36:
+		plotBG("bgD.jpg");
+		plain = new RestrictivePlain(4,4,[1,2,3,5],[0,0,7,0],[[2,0],[2,3]]);
+		plain.moves = 12;
+	      break;
+	      case 37:
+		plotBG("bgD.jpg");
+		plain = new RestrictivePlain(5,4,[2,4,6,7],[0,0,0,8],[[3,1],[3,2],[3,3]]);
+		plain.moves = 8;
+	      break;
+	      case 38:
+		plotBG("bgD.jpg");
+		plain = new RestrictivePlain(5,5,[0,2,4,6],[7,7,0,0],[[2,2],[2,1],[2,3],[1,2],[3,2]]);
+		plain.moves = 14;
+	      break;
+	      case 39:
+		plotBG("bgD.jpg");
+		plain = new RestrictivePlain(6,3,[1,3,5,7],[0,10,0,10],[[3,0],[4,2],[5,0],[2,2]]);
+		plain.moves = 21;
+	      break;
+	      case 40:
+		plotBG("bgD.jpg");
+		plain = new Plain(6,4,[0,5,6,7,12],[0,0,0,0,200],[[1,1],[2,1],[2,2],[3,1],[3,2],[4,2]]);
+		plain.moves = 23;
+	      break;
+	      case 41:
+		plotBG("bgD.jpg");
+		plain = new Plain(4,6,[2,3,5,7],[32,0,32,32],[[0,1],[1,1],[2,1],[1,3],[2,3],[3,3],[0,5],[1,5],[2,5]]);
+		plain.moves = 21;
+	      break;
+	      case 42:
+		plotBG("bgD.jpg");
+		plain = new Plain(4,4,[3,3,4,5],[0,0,42,0],[[0,0],[1,1],[2,2],[3,3],[0,3],[3,0]]);
+		plain.moves = 19;
+	      break;
+	      case 43:
+		plotBG("bgD.jpg");
+		plain = new Plain(5,3,[2,6,7,8],[21,0,21,21],[[2,0],[2,2],[3,1],[4,0],[4,1],[4,2]]);
+		plain.moves = 22;
+	      break;
+	      case 44:
+		plotBG("bgD.jpg");
+		plain = new RestrictivePlain(4,5,[2,4,6,8],[0,9,9,7],[[2,0],[3,1],[3,2],[3,3],[2,4]]);
+		plain.moves = 15;
+	      break;
+	      case 45:
+		plotBG("bgD.jpg");
+		plain = new RestrictivePlain(5,5,[1,3,5,7],[10,12,0,0],[[2,0],[1,1],[3,1],[2,2],[1,3],[3,3],[2,4]]);
+		plain.moves = 18;
+	      break;
+	      case 46:
+		plotBG("bgE.jpg");
+		plain = new Plain(5,4,[4,6,7,8],[20,0,28,28],[[0,3],[1,2],[2,0],[3,1],[4,2]]);
+		plain.moves = 18;
+	      break;
+	      case 47:
+		plotBG("bgE.jpg");
+		plain = new RestrictivePlain(5,5,[1,3,5,8],[0,0,7,15],[[1,0],[2,0],[3,0],[4,1],[4,2],[4,3],[1,4],[2,4],[3,4],[2,2]]);
+		plain.moves = 22;
+	      break;
+	      case 48:
+		plotBG("bgE.jpg");
+		plain = new Plain(4,4,[2,5,6,8],[26,26,24,0],[[2,0],[2,1],[2,2],[2,3],[3,0],[3,1],[3,2],[3,3]]);
+		plain.moves = 25;
+	      break;
+	      case 49:
+		plotBG("bgE.jpg");
+		plain = new RestrictivePlain(5,6,[0,2,3,5,7],[13,0,0,0,0],[[2,0],[2,1],[2,2],[2,3],[2,4],[3,0],[3,1],[3,2],[3,3],[3,4],[4,0],[4,1],[4,2],[4,3],[4,4]]);
+		plain.moves = 20;
+	      break;
+	      case 50:
+		plotBG("bgE.jpg");
+		plain = new Plain(6,4,[1,3,4,5,8],[0,32,0,32,0],[[3,0],[4,0],[5,0],[3,1],[4,1],[5,1],[3,2],[4,2],[5,2],[5,3]]);
+		plain.moves = 30;
+	      break;
+	      case 51:
+		plotBG("bgE.jpg");		
+		plain = new Plain(5,5,[0,2,4,5,7],[28,0,28,0,28],[[2,1],[2,2],[2,3],[1,1],[1,3],[3,2]]);
+		plain.witch = new Witch(2);
+		plain.moves = 26;
+	      break;
+	      case 52:
+		plotBG("bgE.jpg");
+		plain = new Plain(4,5,[1,3,4,6,8],[0,0,21,0,21],[[3,0],[3,1],[3,2],[3,3],[3,4],[2,0],[2,1],[2,2],[2,3],[2,4],[1,0],[1,1],[1,3],[1,4]]);
+		plain.witch = new Witch(2);
+		plain.moves = 23;
+	      break;
+	      case 53:
+		plotBG("bgE.jpg");
+		plain = new Plain(5,5,[0,2,4,6,8],[0,32,0,0,0],[[3,0],[3,1],[3,2],[3,3],[2,0],[2,3]]);
+		plain.witch = new Witch(2);
+		plain.moves = 23;
+	      break;
+	      case 54:
+		plotBG("bgE.jpg");
+		plain = new Plain(5,5,[0,1,2,3,4],[0,42,0,0,0],[[3,0],[3,1],[3,2],[3,3],[2,0],[2,1],[2,2],[2,3],[1,0],[1,3]]);
+		plain.witch = new Witch(2);
+		plain.moves = 26;
+	      break;
+	      case 55:
+		plotBG("bgE.jpg");
+		plain = new RestrictivePlain(5,4,[1,3,5,6,7],[9,0,0,9,0],[[2,1],[2,2],[3,1],[3,2],[4,1],[4,2],[4,0],[4,3]]);
+		plain.moves = 28;
+	      break;
+	      case 56:
+		plotBG("bgE.jpg");
+		plain = new Plain(5,6,[0,2,4,6,8,12],[0,0,0,0,0,250],[[4,0],[4,1],[4,2],[4,3],[4,4],[4,5],[3,1],[3,2],[3,3],[3,4]]);
+		plain.witch = new Witch(3);
+		plain.moves = 30;
+	      break;
+	      case 57:
+		plotBG("bgE.jpg");
+		plain = new Plain(4,4,[1,3,4,5,7],[0,16,16,0,0],[[3,0],[3,1],[3,2],[3,3],[2,0],[2,1],[2,2],[2,3]]);
+		plain.witch = new Witch(4);
+		plain.moves = 20;
+	      break;
+	      case 58:
+		plotBG("bgE.jpg");
+		plain = new Plain(6,5,[0,2,4,6,8],[0,0,0,25,25],[[0,0],[0,1],[1,1],[2,1],[3,0],[3,1],[1,3],[2,3]]);
+		plain.witch = new Witch(3);
+		plain.moves = 27;
+	      break;
+	      case 59:
+		plotBG("bgE.jpg");
+		plain = new RestrictivePlain(5,5,[1,3,5,7,9],[7,7,7,0,0],[[0,0],[0,1],[1,0],[1,1],[2,0],[2,1],[3,0],[3,1],[4,0],[4,1],[4,2],[4,3],[4,4]]);
+		//plain.moves = 28;
+		plain.moves = 16;
+	      break;
+	      case 60:
+		plotBG("bgE.jpg");
+		plain = new Plain(6,3,[0,2,4,8,9],[24,0,0,0,24],[[5,0],[5,1],[5,2],[4,0],[4,1],[4,2],[3,0],[3,2]]);
+		plain.witch = new Witch(3);
+		plain.moves = 23;
+	      break;
+	      case 61:
+		plotBG("bgF.jpg");
+		plain = new Plain(5,4,[3,6,7,8,9],[23,0,0,23,21],[[4,0],[4,2],[3,0],[3,2],[2,0],[2,2]]);
+		plain.witch = new Witch(3);
+		plain.moves = 26;
+	      break;
+	      case 62:
+		plotBG("bgF.jpg");
+		plain = new Plain(5,4,[1,4,5,6,9],[21,0,0,0,25],[[1,0],[1,1],[1,2],[1,3],[2,0],[2,1],[2,2],[2,3],[3,0],[3,3]]);
+		plain.witch = new Witch(3);
+		plain.moves = 26;
+	      break;
+	      case 63:
+		plotBG("bgF.jpg");
+		plain = new Plain(5,4,[0,2,5,7,9],[0,0,28,0,0],[[0,0],[1,0],[2,0],[3,0],[4,0],[0,3],[1,3],[2,3],[3,3],[4,3]]);
+		plain.witch = new Witch(3);
+		plain.moves = 23;
+	      break;
+	      case 64:
+		plotBG("bgF.jpg");
+		plain = new Plain(4,6,[4,6,7,8,9],[0,24,0,0,24],[[0,0],[0,1],[1,0],[1,1],[2,0],[2,1],[3,0],[3,1],[0,5],[1,5],[2,5],[3,5]]);
+		plain.witch = new Witch(3);
+		plain.moves = 25;
+	      break;
+	      case 65:
+		plotBG("bgF.jpg");
+		plain = new Plain(5,4,[3,6,7,8,9],[23,0,0,23,21],[[4,0],[4,2],[3,0],[3,2],[2,0],[2,2]]);
+		plain.witch = new Witch(3);
+		plain.moves = 26;
+	      break;
+	      case 66:
+		plotBG("bgF.jpg");
+		plain = new Plain(5,5,[0,1,2,6,8],[25,0,25,0,25],[[0,0],[1,0],[2,0],[3,0],[4,0],[2,1],[2,2],[2,3],[2,4],[4,1],[4,2],[4,3],[4,4]]);
+		plain.witch = new Witch(3);
+		plain.moves = 30;
+	      break;
+	      case 67:
+		plotBG("bgF.jpg");
+		plain = new RestrictivePlain(5,4,[1,2,4,6,9],[0,9,0,0,12],[[2,0],[2,1],[3,2],[3,3],[1,0],[4,3],[4,0],[0,3]]);
+		plain.moves = 25;
+	      break;
+	      case 68:
+		plotBG("bgF.jpg");
+		plain = new RestrictivePlain(6,3,[2,4,5,7,9],[0,7,0,7,7],[[3,0],[5,0],[5,1],[5,2],[3,2]]);
+		plain.moves = 29;
+	      break;
+	      case 69:
+		plotBG("bgF.jpg");
+		plain = new Plain(5,5,[0,3,5,6,9,12],[0,0,0,0,0,280],[[4,1],[4,2],[4,3],[3,1],[3,2],[3,3],[2,1],[2,2],[2,3]]);
+		plain.witch = new Witch(5);
+		plain.moves = 31;
+	      break;
+	      case 70:
+		plotBG("bgF.jpg");
+		plain = new Plain(4,6,[0,1,2,8,9],[0,0,0,0,45],[[2,2],[2,3],[2,4],[3,2],[3,3],[3,4]]);
+		plain.witch = new Witch(4);
+		plain.moves = 28;
+	      break;
+	      case 71:
+		plotBG("bgF.jpg");
+		plain = new RestrictivePlain(5,4,[1,5,7,8,9],[8,0,8,8,0],[[2,0],[4,1],[2,2],[4,3]]);
+		plain.moves = 30;
+	      break;
+	      case 72:
+		plotBG("bgG.jpg");
+		plain = new FallenPlain(5,5,[0,5,6,8,15],[0,0,0,0,3],[[3,1],[3,2],[3,3],[2,1],[2,2],[2,3],[4,0],[4,2],[4,4]]);
+		plain.moves = 21;
+	      break;
+	      case 73:
+		plotBG("bgG.jpg");
+		plain = new Plain(4,5,[1,5,6,8,9],[0,24,26,0,24],[[3,0],[2,0],[3,1],[2,1],[3,3],[2,3],[3,4],[2,4]]);
+		plain.moves = 25;
+	      break;
+	      case 74:
+		plotBG("bgG.jpg");
+		plain = new RestrictivePlain(5,4,[0,2,3,7,9],[0,8,0,11,0],[[4,0],[3,0],[4,3],[3,3]]);
+		plain.moves = 23;
+	      break;
+	      case 75:
+		plotBG("bgG.jpg");
+		plain = new RestrictivePlain(6,4,[1,4,6,7,8],[0,7,7,0,7],[[1,1],[1,2],[2,1],[2,2]]);
+		plain.moves = 25;
+	      break;
+	      case 76:
+		plotBG("bgG.jpg");
+		plain = new Plain(6,4,[2,5,6,7,9],[0,28,0,24,0],[[2,1],[3,1],[4,1],[2,2],[3,2],[4,2]]);
+		plain.witch = new Witch(5);
+		plain.moves = 27;
+	      break;
+	      case 77:
+		plotBG("bgG.jpg");
+		plain = new Plain(6,3,[1,3,4,5,9],[26,0,26,0,26],[[5,0],[5,1],[5,2],[4,0],[4,1],[4,2]]);
+		plain.witch = new Witch(5);
+		plain.moves = 21;
+	      break;
+	      case 78:
+		plotBG("bgG.jpg");
+		plain = new FallenPlain(4,5,[1,3,4,8,15],[0,0,0,21,3],[[3,0],[3,1],[2,1],[2,2],[2,3],[3,3],[3,4]]);
+		plain.moves = 25;
+	      break;
+	      case 79:
+		plotBG("bgG.jpg");
+		plain = new FallenPlain(5,5,[0,2,4,9,15],[18,0,0,18,3],[[4,0],[4,2],[4,4],[3,1],[3,3]]);
+		//plain.moves = 27;
+		plain.moves = 13;
+	      break;
+	      case 80:
+		plotBG("bgG.jpg");
+		plain = new FallenPlain(5,6,[1,5,7,8,15],[16,0,0,16,3],[[4,0],[4,2],[4,4],[3,1],[3,3],[3,5]]);
+		//plain.moves = 29;
+		plain.moves = 18;
+	      break;
+	      case 81:
+		plotBG("bgG.jpg");
+		plain = new FallenPlain(5,5,[0,1,2,3,15],[0,0,0,0,5],[[4,0],[4,2],[4,4],[3,1],[3,3],[2,0],[2,2],[2,4]]);
+		//plain.moves = 28;
+		plain.moves = 15;
+	      break;
+	      case 82:
+		plotBG("bgG.jpg");
+		plain = new Plain(5,5,[3,4,6,9,12],[0,0,0,0,310],[[2,0],[2,1],[2,3],[2,4],[3,0],[3,1],[3,3],[3,4],[4,0],[4,1],[4,3],[4,4]]);
+		plain.witch = new Witch(4);
+		plain.moves = 32;
+	      break;
+	      case 83:
+		plotBG("bgG.jpg");
+		plain = new Plain(6,4,[0,3,6,8,9],[0,35,0,0,32],[[5,0],[4,0],[5,1],[4,1],[2,2],[2,3],[3,2],[3,3]]);
+		plain.witch = new Witch(5);
+		plain.moves = 30;
+	      break;
+	      case 84:
+		plotBG("bgG.jpg");
+		plain = new Plain(5,4,[2,7,8,10],[0,0,0,54],[[3,0],[3,1],[3,2],[3,3],[4,0],[4,3]]);		
+		plain.moves = 36;
+	      break;
+	      case 85:
+		plotBG("bgG.jpg");
+		plain = new Plain(5,5,[0,4,6,9,10],[21,0,21,0,21],[[4,0],[3,0],[2,0],[2,1],[2,2],[2,3],[2,4],[3,2],[4,2],[3,4],[4,4]]);
+		plain.witch = new Witch(4);
+		plain.moves = 24;
+	      break;
+	      case 86:
+		plotBG("bgG.jpg");
+		plain = new Plain(6,5,[1,5,8,9,10],[0,0,0,23,23],[[5,0],[4,0],[3,0],[3,1],[3,3],[3,4],[4,4],[5,4],[5,1],[5,3]]);
+		plain.witch = new Witch(4);
+		plain.moves = 24;
+	      break;
+	      case 87:
+		plotBG("bgH.jpg");
+		plain = new Plain(5,5,[2,4,6,8,10],[25,0,0,25,0],[[4,0],[4,1],[4,2],[4,3],[4,4],[2,0],[2,1],[2,2],[2,3],[2,4],[3,0],[3,2],[3,4]]);
+		plain.witch = new Witch(5);
+		plain.moves = 28;
+	      break;
+	      case 88:
+		plotBG("bgH.jpg");
+		plain = new Plain(5,5,[1,3,5,7,9],[16,0,16,0,16],[[4,0],[4,1],[4,2],[4,3],[4,4],[3,0],[2,0],[3,2],[2,2]]);
+		plain.witch = new Witch(4);
+		plain.moves = 23;
+	      break;
+	      case 89:
+		plotBG("bgH.jpg");
+		plain = new RestrictivePlain(5,5,[0,1,2,3,10],[0,0,7,0,7],[[1,0],[1,1],[1,3],[1,4],[2,2],[3,2],[4,2]]);
+		plain.moves = 22;
+	      break;
+	      case 90:
+		plotBG("bgH.jpg");
+		plain = new RestrictivePlain(5,6,[4,5,7,9],[0,7,0,16],[[2,0],[2,1],[2,2],[2,3],[2,4],[2,5],[3,0],[3,1],[3,4],[3,5]]);
+		plain.moves = 25;
+	      break;
+	      case 91:
+		plotBG("bgH.jpg");
+		plain = new FallenPlain(5,5,[0,5,7,10,15],[0,0,0,21,5],[[2,0],[3,0],[3,1],[3,3],[3,4],[4,4]]);
+		plain.moves = 27;
+	      break;
+	      case 92:
+		plotBG("bgH.jpg");
+		plain = new FallenPlain(5,5,[0,5,6,8,15],[21,0,0,0,4],[[1,1],[2,2],[3,3],[1,3],[3,1]]);
+		plain.moves = 23;
+	      break;
+	      case 93:
+		plotBG("bgH.jpg");
+		plain = new Plain(4,6,[1,2,7,9,10],[30,30,0,0,30],[[2,0],[2,1],[2,2],[2,3],[2,4],[3,0],[3,1],[3,2],[3,3],[3,4]]);
+		plain.witch = new Witch(4);
+		plain.moves = 30;
+	      break;
+	      case 94:
+		plotBG("bgH.jpg");
+		plain = new RestrictivePlain(4,6,[1,2,6,8,9],[0,0,9,7,7],[[2,0],[2,1],[2,2],[2,3],[2,4],[3,0],[3,1],[3,2],[3,3],[3,4]]);
+		plain.moves = 24;
+	      break;
+	      case 95://MY BIRTHDAY
+		plotBG("bgH.jpg");
+		plain = new Plain(6,5,[2,4,8,10],[22,0,7,91],[[5,4],[4,3],[5,2],[3,4],[5,0],[4,1],[3,2],[2,3],[1,4]]);
+		plain.witch = new Witch(5);
+		plain.moves = 34;
+	      break;
+	      case 96:
+		plotBG("bgH.jpg");
+		plain = new Plain(5,5,[0,5,7,9,12],[0,0,0,0,350],[[2,0],[2,1],[2,2],[2,3],[2,4],[0,2],[1,2],[3,2],[4,2]]);
+		plain.witch = new Witch(3);
+		plain.moves = 31;
+	      break;
+	      case 97:
+		plotBG("bgH.jpg");
+		plain = new FallenPlain(5,5,[1,3,6,10,15],[28,24,0,0,3],[[2,0],[2,1],[2,2],[2,3],[2,4],[3,2],[4,2]]);
+		plain.moves = 32;
+	      break;
+	      case 98:
+		plotBG("bgH.jpg");
+		plain = new RestrictivePlain(5,5,[1,4,5,8,10],[0,0,7,7,7],[[4,3],[4,4],[2,3],[2,4],[3,1],[3,2],[3,3],[4,0],[4,1],[2,0],[2,1]]);
+		plain.moves = 29;
+	      break;
+	      case 99:
+		plotBG("bgH.jpg");
+		plain = new Plain(6,5,[3,6,6,9,9,10,10],[24,0,0,0,0,0,0],[[5,0],[5,2],[5,4],[4,1],[4,2],[4,3],[3,0],[3,2],[3,4]]);
+		plain.witch = new Witch(8);
+		plain.moves = 18;
+	      break;
+	      case 100:
+		plotBG("bgH.jpg");
+		plain = new FallenPlain(6,3,[2,4,8,11,15],[16,0,16,0,9],[[5,0],[5,1],[5,2],[4,0],[4,1],[4,2]]);
+		plain.moves = 32;
+	      break;
+	      case 101:
+		plotBG("bgH.jpg");
+		plain = new CannonPlain(5,5,[1,3,5,8],[32,50,0,32],[[3,1],[2,2],[3,3]],[[4,2,-1,0]]);
+		plain.moves = 24;
+	      break;
+	      case 102:
+		plotBG("bgH.jpg");
+		plain = new CannonPlain(5,5,[3,4,6,9],[0,65,65,0],[],[[3,1,0,1]]);
+		plain.moves = 26;
+	      break;
+	      case 103:
+		plotBG("bgH.jpg");
+		plain = new CannonPlain(5,6,[0,1,3,7],[28,28,0,28],[],[[2,0,0,1],[3,5,0,-1]]);
+		plain.moves = 28;
+	      break;
+	      default:	      
+		main();
+	      break;
+	      
+	    }
+	  
+	  };
+	  	  
+	  refreshArrayMonsterLevel = function(){
+	  
+	      if(monsterLevelIndex == 0){
+		arrayObject.left.visible = false;
+	      }else if(monsterLevelIndex == __monsterLevel__.length-1){
+		arrayObject.right.visible = false;
+	      }else{
+		arrayObject.right.visible = true;
+		arrayObject.left.visible = true;
+	      }	      	      
+	    
+	  };
+	  	  
+	  prevMonsterLevel = function(){
+	  
+	    
+	    if(monsterLevelIndex > 0){
+	      monsterLevelIndex -= 1;
+	      monsterLevel();
+	      refreshArrayMonsterLevel();
+	      game.assets["menu.wav"].play();
+	    }
+	    
+	    
+	  };
+	  
+	  nextMonsterLevel = function(){
+	  
+	  	  
+	    if(monsterLevelIndex < __monsterLevel__.length - 1){
+	      monsterLevelIndex += 1;
+	      monsterLevel();
+	      refreshArrayMonsterLevel();
+	      game.assets["menu.wav"].play();
+	    }	
+	    
+	  };
+	  
+	  var __groupMonsterLevel__;
+	  monsterLevel = function(){
+	  
+	    game.rootScene.removeChild(__groupMonsterLevel__);
+	    __groupMonsterLevel__ = undefined;
+	  
+	    var g = new Group();
+	    g.width = 80*5;
+	    g.height = 80*5;
+	    g.x = (game.width-g.width)/2;
+	    g.y = (game.height-g.height)/2;
+	    
+	    var bg = new Label();
+	    bg.backgroundColor = "rgba(0,0,0,0.7)";
+	    bg.width = g.width;
+	    bg.height = g.height;
+	    g.addChild(bg);	  
+	    
+	    //for(var i=p[0];i<p[1];i++){
+	    for(var i=__monsterLevel__[monsterLevelIndex][0];i<__monsterLevel__[monsterLevelIndex][1];i++){
+	      var btn = new Label("Level "+(i+1));
+	      btn.x = ((i%25)%5)*80;
+	      btn.y = (parseInt((i%25)/5))*80;
+	      btn.width = 80;
+	      btn.height = 80;	      
+	      //btn.font = "20px sans-serif";
+	      if((i+1).toString().length == 2){
+		btn.font = "20px sans-serif";
+	      }else if((i+1).toString().length == 3){
+		btn.font = "18px sans-serif";
+	      }
+	      btn.textAlign = "center";
+	      
+	      if(i % 2 == 0){
+		btn.backgroundColor = "rgba(0,0,0,0)";
+		btn.color = "white";
+	      }else{
+		btn.backgroundColor = "rgba(255,255,255,0.5)";
+		btn.color = "black";
+	      }
+	      g.addChild(btn);
+	      
+	      var spr = new Sprite(58,55);
+	      spr.image = game.assets["monsterLevels58x55.png"];
+	      spr.x = ((i%25)%5)*80 + 11;
+	      spr.y = parseInt((i%25)/5)*80 + 25;
+	      
+	      if(i < levelMaxUnlocked-1){
+		spr.frame = 1;
+	      }else if(i == levelMaxUnlocked-1){
+		spr.frame = 2;
+		btn.backgroundColor = "rgba(20,140,20,0.7)";
+	      }else{
+		spr.frame = 0;
+	      }
+	      
+	      g.addChild(spr);
+	      
+	    }
+	    game.rootScene.addChild(g);
+	    __groupMonsterLevel__ = g;
+	    
+	  };
+		  
+	  main = function(){
+	    
+	    GAME_STATUS = 0;
+	    reset();
+	    plotBG("bgA.jpg");
+	    
+	    //monsterLevelIndex = parseInt(levelActual/25);
+	    //monsterLevelIndex = parseInt((levelActual-1)/25);
+	    monsterLevelIndex = parseInt((levelMaxUnlocked-1)/25);
+	    
+	    monsterLevel();	  
+	    scoreLabel();
+	    restart({x:20,y:20,scale:0.8});
+	    arrayLeft({x:60,y:game.height-140,scale:1});
+	    arrayRight({x:160,y:game.height-140,scale:1});
+	    
+	    music({x:95,y:23,scale:0.8});
+	    
+	    refreshArrayMonsterLevel();
+	    
+	    storage.save(levelActual,levelMaxUnlocked,score);
+	    
+	  };
+	  
+	  var witchCounter = 0;
+	  var victoryCounter = 0;
+	  var watermelonCounter = 0;
+	  var pumpkingCounter = 0;
+	  var shotCannonCounter = 0;
+	  var lastPath = [];
+	  var touchBusy = false;
+	  var Thread = window.setInterval(function(){
+	    
+	    switch(GAME_STATUS){
+	      case 0:
+	      
+		if(checkMusicCounter > 1){
+		  checkMusicCounter--;
+		}else if(checkMusicCounter == 1){
+		  checkMusicCounter = 0;
+		  checkMusic();
+		}
+		
+	      break;
+	      case 1:
+		if(plain != undefined){
+
+		  if(plain.witch != undefined){
+		    if(witchCounter > 1){
+		      witchCounter--;
+		    }else if(witchCounter == 1){
+		      witchCounter = 0;
+		      plain.witch.action();
+		    }
+		  }
+		  		  
+		  if(waitRemoveOne && plain.path.length == 1 && !touchBusy){
+		    plain.removeOne(plain.path[0]);
+		    plain.turnOff();
+		    waitRemoveOne = false;
+		  }else if(waitRemoveOne && plain.path.length == 0 && touchBusy){
+		    plain.turnOff();
+		    waitRemoveOne = false;
+		    score += __COST_REMOVE_ONE__;
+		  }else
+	      
+		  if(waitCollectSame && plain.path.length == 1 && !touchBusy){
+		    plain.collectSame(plain.path[0]);
+		    plain.turnOff();
+		    waitCollectSame = false;
+		  }else if(waitCollectSame && plain.path.length == 0 && touchBusy){
+		    plain.turnOff();
+		    waitCollectSame = false;
+		    score += __COST_COLLECT_SAME__;
+		  }
+		  
+		  if(plain.cannon != undefined){		    
+		    if(shotCannonCounter > 1){
+		      shotCannonCounter--;
+		    }else if(shotCannonCounter == 1){		    
+		      //console.log("shot!");
+		      shotCannonCounter = 0;
+		      plain.shotCannon();
+		    }
+		  }
+		  
+		  
+		  if((lastPath.length > 0) && (watermelonCounter != 0 || pumpkingCounter != 0)){
+		  
+		    if(watermelonCounter != 0){
+		    
+		      if(watermelonCounter > 1){
+			watermelonCounter--;
+		      }else if(watermelonCounter == 1){
+			//console.log("watermelon");
+			watermelonCounter = 0;
+			plain.watermelon(lastPath);
+			lastPath = [];
+		      }
+		      
+		    }else{
+		    
+		      if(pumpkingCounter > 1){
+			pumpkingCounter--;
+		      }else if(pumpkingCounter == 1){
+			//console.log("pumpking");
+			pumpkingCounter = 0;
+			plain.pumpking(lastPath);
+			lastPath = [];
+		      }
+		      
+		    }
+		    
+		    //lastPath = [];
+		    
+		  }
+		  
+		  if(victoryCounter > 1){
+		    victoryCounter--;
+		  }else if(victoryCounter == 1){
+		    //console.log("check");
+		    victoryCounter = 0;
+		    plain.check();
+		  }
+	      
+		  if(plain.hasEmptyCells()){
+		    plain.insertBlocksFirstRow();
+		  }
+		  
+		  if(plain.hasDownCells()){
+		    plain.downBlocks();
+		  }
+		  
+		  if(!plain.hasEmptyCells() && !plain.hasDownCells()){		
+		    
+		    if(plain.frame != -1 && touchBusy == false){
+
+		      if(plain.path.length >= 3){
+			for(var i in plain.path){
+			  plain.takeCell(plain.path[i]);
+			}
+			
+			if(plain.frame != 15){
+			  plain.moves--;
+			  __score__ += plain.path.length*2;
+			}
+			
+			if(plain.path.length > 14){
+			  //pumpking
+			  pumpkingCounter = 7;
+			  lastPath = [plain.path[plain.path.length-1][0],plain.path[plain.path.length-1][1]];
+			}else if(plain.path.length > 6){
+			  //watermelon
+			  watermelonCounter = 5;
+			  lastPath = [plain.path[plain.path.length-1][0],plain.path[plain.path.length-1][1]];
+			}
+			
+			//if(plain.witch != undefined){witchCounter = 25;}
+			if(plain.witch != undefined){
+			  witchCounter = 10;
+			  if(watermelonCounter != 0 || pumpkingCounter != 0){
+			    witchCounter += 15;
+			  }
+			}
+			
+			if(plain.frame != 15){
+			  if(victoryCounter == 0){
+			    shotCannonCounter = 10 + pumpkingCounter + watermelonCounter + witchCounter;
+			  }else{
+			    shotCannonCounter = 0;
+			  }
+			}
+			
+		      }
+		      plain.path = [];
+		      plain.frame = -1;	    
+		      plain.unInk = true;
+		      //victoryCounter = 25;
+		      victoryCounter = 28;		      
+		      //plain.moves--;
+		      
+		    }else if(plain.unInk == true){
+		    
+		      plain.inkCells(plain.path);
+		      plain.unInk = false;
+		    }
+		  
+		  }
+		  
+		  if(checkMusicCounter > 1){
+		    checkMusicCounter--;
+		  }else if(checkMusicCounter == 1){
+		    checkMusicCounter = 0;
+		    checkMusic();
+		  }
+		  
+		}
+	      break;
+	    }
+
+	    
+	  },50);
+	  
+	  game.rootScene.on("touchstart",function(event){
+	  
+	  
+	    switch(GAME_STATUS){
+	      case 1:
+	  
+		//if(touchBusy == false && plain.unInk == false){
+		if(touchBusy == false && plain.unInk == false && (plain.witch == undefined || (plain.witch != undefined && plain.witch.ready))){
+		  
+		  var ex = -1;
+		  var ey = -1;
+		  
+		  if(event.localX >= plain.x){
+		    ex = parseInt((event.localX-plain.x)/80);
+		  }
+		
+		  if(event.localY >= plain.y){
+		    ey = parseInt((event.localY-plain.y)/80);
+		  }
+		  
+		  var shot = false;
+		  if(plain.cannon != undefined){
+		    for(var s=0;s<plain.cannon.length;s++){
+		      if(!shot && plain.cannon[s][0] == ey && plain.cannon[s][1] == ex){
+			shot = true;
+			break;
+		      }
+		    }
+		  }
+		  
+		  //console.log(ex,ey);
+		  //if(event.localX >= plain.x && event.localX <= plain.x+plain.width && event.localY >= plain.y && event.localY <= plain.y+plain.height){
+		  if(event.localX >= plain.x && event.localX <= plain.x+plain.width && event.localY >= plain.y && event.localY <= plain.y+plain.height && !shot){
+		    if(plain.cell[ey][ex] != undefined){
+		      if(plain.path.length == 0 && inArray(plain.path,[ey,ex]) == false){
+			
+			plain.frame = plain.cell[ey][ex].frame;
+			plain.path.push([ey,ex]);
+			plain.inkCells(plain.path);
+			plain.refreshPathLengthLabel();
+			game.assets["select.wav"].play();
+			
+		      }
+		    }	  
+		  }
+		  
+		  touchBusy = true;
+		}
+	      break;
+	    }
+	  
+	  });
+	  var last = [];
+	  game.rootScene.on("touchmove",function(event){
+		  
+	    switch(GAME_STATUS){
+	      case 1:
+	      
+		//if(touchBusy == true){
+		if(!waitCollectSame && !waitRemoveOne && touchBusy == true && (plain.witch == undefined || (plain.witch != undefined && plain.witch.ready))){
+	      
+		  var ex = -1;
+		  var ey = -1;
+		  
+		  if(event.localX >= plain.x){
+		    ex = parseInt((event.localX-plain.x)/80);
+		  }
+		
+		  if(event.localY >= plain.y){
+		    ey = parseInt((event.localY-plain.y)/80);
+		  }
+		  
+		  var shot = false;
+		  if(plain.cannon != undefined){
+		    for(var s=0;s<plain.cannon.length;s++){
+		      if(!shot && plain.cannon[s][0] == ey && plain.cannon[s][1] == ex){
+			shot = true;
+			break;
+		      }
+		    }	
+		  }
+		  
+		  //if(last[0] != ex || last[1] != ey){
+		  if(!shot && (last[0] != ex || last[1] != ey) && plain.path.length > 0){
+		    last = [ex,ey];
+		    
+		    if(event.localX >= plain.x && event.localX <= plain.x+plain.width && event.localY >= plain.y && event.localY <= plain.y+plain.height){
+		      if(plain.cell[ey][ex] != undefined){
+		      
+			if(plain.cell[ey][ex].frame == plain.frame && neigh(plain.path,[ey,ex]) == true){
+		      
+			  if(inArray(plain.path,[ey,ex]) == false){
+			    plain.path.push([ey,ex]);
+			    game.assets["select.wav"].play();
+			  }else{
+			    //jah tem!
+			    var i = indexOf(plain.path,[ey,ex]);
+			    var len = plain.path.length;
+			    var dif = (len - i - 1);
+			    if(dif < len){
+			      if(dif > 0){
+				plain.path.splice(len-dif,len);
+				game.assets["selectCancel.wav"].play();
+			      }
+			    }
+			  }
+			}
+			
+			plain.inkCells(plain.path);
+			plain.refreshPathLengthLabel();
+		      }
+		    }
+		    
+		  }	    
+		  
+		  
+	      
+		}
+	      break;
+	    }
+	    
+	  });	
+	  game.rootScene.on("touchend",function(event){
+	  
+	    switch(GAME_STATUS){
+	      case 0:
+	      
+		  var ex = -1;
+		  var ey = -1;
+		  
+		  //container infos
+		  var container = [(game.width-400)/2,(game.height-400)/2,400,400];
+		  
+		  if(event.localX >= container[0]){
+		    ex = parseInt((event.localX-container[0])/80);
+		  }
+		
+		  if(event.localY >= container[1]){
+		    ey = parseInt((event.localY-container[1])/80);
+		  }
+		  
+		  if(event.localX >= container[0] && event.localX <= container[0]+container[2] && event.localY >= container[1] && event.localY <= container[1]+container[3]){
+		    
+		    var z = (25*monsterLevelIndex)+5*ey+ex+1;
+		    
+		    if(z <= levelMaxUnlocked){
+		      game.assets["menu.wav"].play();
+		      levelActual = z;
+		      GAME_STATUS = 1;
+		      level();
+		    }else{
+		    	if (z == 125) {		    		
+		    		if (debugMasterCounter++ > debugMasterTarget) {
+		    			score = parseInt(score) + 9999;
+		    			storage.save(levelActual, levelMaxUnlocked, score);
+			    		game.assets["upMonster.ogg"].play();
+			    		debugMasterCounter = 0;
+			    		window.setTimeout(function () {window.location.href="";}, 2000);
+		    		} else {
+		      			game.assets["lockedLevel.wav"].play();		    		
+		    		}
+		    	} else {
+		      		game.assets["lockedLevel.wav"].play();		    		
+		    	}
+		    }
+		    
+		  }else if(event.localX >= restartPos.x1 && event.localX <= restartPos.x2 && event.localY >= restartPos.y1 && event.localY <= restartPos.y2){
+		    
+		    game.assets["menu.wav"].play();
+		    if(confirm("Resetar o jogo:")){
+		      //console.log("RESET ALL");
+		      storage.clear();
+		      levelActual = 1;
+		      levelMaxUnlocked = 1;
+		      score = score_init;
+		      main();
+		    } else {
+		    	storage.save(levelActual, levelMaxUnlocked, score);
+		    }
+		    
+		  }else if(event.localX >= arrayLeftPos.x1 && event.localX <= arrayLeftPos.x2 && event.localY >= arrayLeftPos.y1 && event.localY <= arrayLeftPos.y2){
+		    
+		    //game.assets["menu.wav"].play();
+		    if(monsterLevelIndex > 0){
+		      prevMonsterLevel();
+		    }
+		
+		  }else if(event.localX >= arrayRightPos.x1 && event.localX <= arrayRightPos.x2 && event.localY >= arrayRightPos.y1 && event.localY <= arrayRightPos.y2){
+		    
+		    //game.assets["menu.wav"].play();
+		    if(monsterLevelIndex < __monsterLevel__.length-1){
+		      nextMonsterLevel();
+		    }
+		  
+		  }else if(event.localX >= musicPos.x1 && event.localX <= musicPos.x2 && event.localY >= musicPos.y1 && event.localY <= musicPos.y2){
+		  
+		    toggleMusic();
+		  
+		  }
+		
+	      break;
+	      case 1:
+		touchBusy = false;
+		plain.pathLabel._visible = false;
+		if(plain.path.length >= 3 && event.localX >= plain.x && event.localX <= plain.x+plain.width && event.localY >= plain.y && event.localY <= plain.y+plain.height){
+		  game.assets["selectedRelease.wav"].play();
+		}
+		
+		if(event.localX >= restartPos.x1 && event.localX <= restartPos.x2 && event.localY >= restartPos.y1 && event.localY <= restartPos.y2){		
+		  
+		  game.assets["menu.wav"].play();
+// 		  if(confirm("Reiniciar a fase:")){
+// 		    level();
+// 		  }
+		  plain.randomCells();
+		  
+		}else if(event.localX >= backPos.x1 && event.localX <= backPos.x2 && event.localY >= backPos.y1 && event.localY <= backPos.y2){
+		  
+		  game.assets["menu.wav"].play();
+		  if(confirm("Inicio do jogo:")){
+		    main();
+		  }
+		  
+		}else if(event.localX >= musicPos.x1 && event.localX <= musicPos.x2 && event.localY >= musicPos.y1 && event.localY <= musicPos.y2){		
+		    
+		    toggleMusic();
+		  
+		}else if(event.localX >= noIcePos.x1 && event.localX <= noIcePos.x2 && event.localY >= noIcePos.y1 && event.localY <= noIcePos.y2){		
+		    
+		    plain.noIce();
+		  
+		}else if(event.localX >= collectSamePos.x1 && event.localX <= collectSamePos.x2 && event.localY >= collectSamePos.y1 && event.localY <= collectSamePos.y2){		
+		    
+		    if ((confirm("Remover todos os monstros iguais. \n Custo: "+__COST_COLLECT_SAME__+" scores. \n Seu score: "+score)) && score >= __COST_COLLECT_SAME__) {
+		      score -= __COST_COLLECT_SAME__;
+		      plain.turnOn();
+		      waitCollectSame = true;		      
+		    }
+		  
+		}else if(event.localX >= removeOnePos.x1 && event.localX <= removeOnePos.x2 && event.localY >= removeOnePos.y1 && event.localY <= removeOnePos.y2){		
+	
+		    if ((confirm("Remover um monstro. \n Custo: "+__COST_REMOVE_ONE__+" scores. \n Seu score: "+score)) && score >= __COST_REMOVE_ONE__) {
+		      score -= __COST_REMOVE_ONE__;
+		      plain.turnOn();
+		      waitRemoveOne = true;		      
+		    }
+		  
+		}
+		
+	      break;
+	    }
+	    
+	  });
+
+	  //========== INTRO ===========
+	  main();	
+	  
+	};
+    
+	game.start();
+	
+      };
+
+    </script>
+  </body>
+</html>
