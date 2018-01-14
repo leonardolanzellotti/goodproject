@@ -1,5 +1,6 @@
 window.onload = function () {
 const VIEWPORT_DIMENSION = [
+	{W: 176, H: 220, SW: 11, DPI_MIN: 0.53, DPI_MAX: 0.60},
 	{W: 320, H: 400, SW: 20, DPI_MIN: 1.83, DPI_MAX: 1.90},
 	{W: 352, H: 440, SW: 22, DPI_MIN: 1.90, DPI_MAX: 1.97}
 ];
