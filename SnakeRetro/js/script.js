@@ -1,4 +1,7 @@
 window.onload = function () {
+const VIEWPORT_DIMENSION = [
+	{W: 320, H: 400, SW: 20, DPI_MIN: 1.83, DPI_MAX: 1.92}
+];
 var colors = ["#f00","#0f0","#00f","#ff0","#f0f","#0ff"];
 var Point = function(x,y,color){
 	this.x = x;
@@ -53,10 +56,16 @@ function update(){
 }
 
 function scaleViewport(){
-	h = Math.floor(window.outerHeight * 0.7);//espaço para os botões
-	w = Math.floor(h * viewportProportion); 
+	var currentDpi = window.outerWidth / window.outerHeight;
 	
-	//--> SW = Encontrar um número que seja um divisor (MDC) entre W e H.
+	for (var i in VIEWPORT_DIMENSION) {
+		if (currentDpi >= VIEWPORT_DIMENSION[i].DPI_MIN && currentDpi < VIEWPORT_DIMENSION[i].DPI_MAX) {
+			w = VIEWPORT_DIMENSION[i].W;
+			h = VIEWPORT_DIMENSION[i].H;
+			sw = VIEWPORT_DIMENSION[i].SW;
+			break;
+		}
+	}
 }
 
 function addInputs(){
