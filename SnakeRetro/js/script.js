@@ -1,6 +1,7 @@
 window.onload = function () {
 const VIEWPORT_DIMENSION = [
-	{W: 320, H: 400, SW: 20, DPI_MIN: 1.83, DPI_MAX: 1.92}
+	{W: 320, H: 400, SW: 20, DPI_MIN: 1.83, DPI_MAX: 1.90},
+	{W: 352, H: 440, SW: 22, DPI_MIN: 1.90, DPI_MAX: 1.97}
 ];
 var colors = ["#f00","#0f0","#00f","#ff0","#f0f","#0ff"];
 var Point = function(x,y,color){
@@ -10,8 +11,7 @@ var Point = function(x,y,color){
 };
 var cnv = document.getElementById("canvas");
 var ctx = cnv.getContext("2d");
-var w = 320, h = 400, viewportProportion = 0.8;
-var sw = 20;
+var w = 0, h = 0, sw = 0;
 var snake = [];
 var fps = 20;
 var dx = 0, dy = 0;
@@ -63,9 +63,10 @@ function scaleViewport(){
 			w = VIEWPORT_DIMENSION[i].W;
 			h = VIEWPORT_DIMENSION[i].H;
 			sw = VIEWPORT_DIMENSION[i].SW;
-			break;
+			return true;
 		}
 	}
+	return console.log("DPI não encontrado no array VIEWPORT_DIMENSION. Favor configurá-lo.") != undefined;
 }
 
 function addInputs(){
