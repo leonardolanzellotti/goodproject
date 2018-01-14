@@ -7,7 +7,7 @@ var Point = function(x,y,color){
 };
 var cnv = document.getElementById("canvas");
 var ctx = cnv.getContext("2d");
-var w = 320, h = 400;
+var w = 320, h = 400, viewportProportion = 0.8;
 var sw = 20;
 var snake = [];
 var fps = 20;
@@ -18,6 +18,7 @@ var loop;
 var canRestart = false;
 
 function start(){
+	scaleViewport();
 	console.log(w, h, sw);
 	cnv.width = w;
 	cnv.height = h;
@@ -49,6 +50,12 @@ function update(){
 			clearInterval(loop);
 		}
 	}
+}
+
+function scaleViewport(){
+	h = Math.floor(window.outerHeight * 0.7);//espaço para os botões
+	w = Math.floor(h * viewportProportion); 
+	var x;
 }
 
 function addInputs(){
