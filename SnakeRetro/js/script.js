@@ -55,7 +55,8 @@ function update(){
 function scaleViewport(){
 	h = Math.floor(window.outerHeight * 0.7);//espaço para os botões
 	w = Math.floor(h * viewportProportion); 
-	var x;
+	
+	for (sw = 1; w % sw == 0 && h % sw == 0; sw++);
 }
 
 function addInputs(){
