@@ -7,8 +7,8 @@ var Point = function(x,y,color){
 };
 var cnv = document.getElementById("canvas");
 var ctx = cnv.getContext("2d");
-var w = 240, h = 280;
-var sw = 10;
+var w = 320, h = 400;
+var sw = 20;
 var snake = [];
 var fps = 20;
 var dx = 0, dy = 0;
@@ -18,8 +18,11 @@ var loop;
 var canRestart = false;
 
 function start(){
+	console.log(w, h, sw);
+	cnv.width = w;
+	cnv.height = h;
 	dx = dy = 0;
-	snake=[new Point(w/2,h/2,colors[0])];
+	snake=[new Point(w/2, h/2, colors[0])];
 	addFood();
 	loop=setInterval(update,fps);
 	addInputs();
@@ -113,9 +116,7 @@ function hitSelf(){
 
 function hitWall(){
 	var head = snake[snake.length-1];
-	if(head.x < 0 || head.x + sw > w || head.y < 0 || head.y + sw > h)
-		return true;
-	return false;
+	return (head.x < 0 || head.x + sw > w || head.y < 0 || head.y + sw > h);
 }
 
 function gameOver(){
